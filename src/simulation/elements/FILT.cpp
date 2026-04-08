@@ -54,11 +54,11 @@ static int graphics(GRAPHICS_FUNC_ARGS)
 	*colg = 0;
 	*colb = 0;
 	*colr = 0;
-	for (x=0; x<12; x++) {
-		*colr += (wl >> (x+18)) & 1;
+	for (x=0; x<13; x++) {
+		*colr += (wl >> (x+19)) & 1;
 		*colb += (wl >>  x)     & 1;
 	}
-	for (x=0; x<12; x++)
+	for (x=0; x<13; x++)
 		*colg += (wl >> (x+9))  & 1;
 	x = 624/(*colr+*colg+*colb+1);
 	if (cpart->life>0 && cpart->life<=4)
@@ -68,6 +68,9 @@ static int graphics(GRAPHICS_FUNC_ARGS)
 	*colr *= x;
 	*colg *= x;
 	*colb *= x;
+	if (!(*colr | *colg | *colb)) {
+		*colr = *colg = *colb = 140;
+	}
 	*pixel_mode &= ~PMODE;
 	*pixel_mode |= PMODE_BLEND;
 	return 0;
@@ -82,7 +85,7 @@ static void create(ELEMENT_CREATE_FUNC_ARGS)
 // cpart is the FILT particle, origWl the original wavelengths in the interacting particle
 int Element_FILT_interactWavelengths(Simulation *sim, Particle* cpart, int origWl)
 {
-	const int mask = 0x3FFFFFFF;
+	const int mask = 0xFFFFFFFF;
 	int filtWl = Element_FILT_getWavelengths(cpart);
 	switch (cpart->tmp)
 	{
@@ -96,13 +99,13 @@ int Element_FILT_interactWavelengths(Simulation *sim, Particle* cpart, int origW
 			return origWl & (~filtWl); //Subtract colour of filt from colour of photon
 		case 4:
 		{
-			int shift = int((cpart->temp-273.0f)*0.025f);
+			int shift = int((cpart->temp-273.0f)*0.027f);
 			if (shift<=0) shift = 1;
 			return (origWl << shift) & mask; // red shift
 		}
 		case 5:
 		{
-			int shift = int((cpart->temp-273.0f)*0.025f);
+			int shift = int((cpart->temp-273.0f)*0.027f);
 			if (shift<=0) shift = 1;
 			return (origWl >> shift) & mask; // blue shift
 		}
@@ -122,12 +125,12 @@ int Element_FILT_interactWavelengths(Simulation *sim, Particle* cpart, int origW
 		case 10:
 		{
 			long long int lsb = filtWl & (-filtWl);
-			return (origWl * lsb) & 0x3FFFFFFF; //red shift
+			return (origWl * lsb) & 0xFFFFFFFF; //red shift
 		}
 		case 11:
 		{
 			long long int lsb = filtWl & (-filtWl);
-			return (origWl / lsb) & 0x3FFFFFFF; // blue shift
+			return (origWl / lsb) & 0xFFFFFFFF; // blue shift
 		}
 		default:
 			return filtWl;
@@ -136,15 +139,15 @@ int Element_FILT_interactWavelengths(Simulation *sim, Particle* cpart, int origW
 
 int Element_FILT_getWavelengths(const Particle* cpart)
 {
-	if (cpart->ctype&0x3FFFFFFF)
+	if (((cpart->ctype&0xFFFFFFFF) || (cpart->tmp2 == 1)) && (cpart->tmp2 != 2))
 	{
 		return cpart->ctype;
 	}
 	else
 	{
-		int temp_bin = (int)((cpart->temp-273.0f)*0.025f);
+		int temp_bin = (int)((cpart->temp-273.0f)*0.027f);
 		if (temp_bin < 0) temp_bin = 0;
-		if (temp_bin > 25) temp_bin = 25;
+		if (temp_bin > 27) temp_bin = 27;
 		return (0x1F << temp_bin);
 	}
 }

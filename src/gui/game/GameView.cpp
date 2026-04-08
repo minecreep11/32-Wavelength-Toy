@@ -2355,7 +2355,7 @@ void GameView::OnDraw()
 			int ctype = sample.particle.ctype;
 
 			if (type == PT_PHOT || type == PT_BIZR || type == PT_BIZRG || type == PT_BIZRS || type == PT_FILT || type == PT_BRAY || type == PT_C5)
-				wavelengthGfx = (ctype&0x3FFFFFFF);
+				wavelengthGfx = 1;
 
 			if (showDebug)
 			{
@@ -2446,7 +2446,7 @@ void GameView::OnDraw()
 				if (type == PT_CRAY || type == PT_DRAY || type == PT_EXOT || type == PT_LIGH || type == PT_SOAP || type == PT_TRON
 						|| type == PT_VIBR || type == PT_VIRS || type == PT_WARP || type == PT_LCRY || type == PT_CBNW || type == PT_TSNS
 						|| type == PT_DTEC || type == PT_LSNS || type == PT_PSTN || type == PT_LDTC || type == PT_VSNS || type == PT_LITH
-						|| type == PT_CONV || type == PT_ETRD)
+						|| type == PT_CONV || type == PT_ETRD || type == PT_FILT || type == PT_BRAY)
 					sampleInfo << ", Tmp2: " << sample.particle.tmp2;
 
 				sampleInfo << ", Pressure: " << sample.AirPressure;
@@ -2481,10 +2481,10 @@ void GameView::OnDraw()
 		{
 			int i, cr, cg, cb, j, h = 3, x = XRES-19-textWidth, y = 10;
 			int tmp;
-			g->BlendFilledRect(RectSized(Vec2{ x, y }, Vec2{ 30, h }), 0x404040_rgb .WithAlpha(alpha));
-			for (i = 0; i < 30; i++)
+			g->BlendFilledRect(RectSized(Vec2{ x, y }, Vec2{ 32, h }), 0x404040_rgb .WithAlpha(alpha));
+			for (i = 0; i < 32; i++)
 			{
-				if ((wavelengthGfx >> i)&1)
+				if ((sample.particle.ctype >> i)&1)
 				{
 					// Need a spread of wavelengths to get a smooth spectrum, 5 bits seems to work reasonably well
 					if (i>2) tmp = 0x1F << (i-2);
@@ -2494,9 +2494,9 @@ void GameView::OnDraw()
 					cb = 0;
 					cr = 0;
 
-					for (j=0; j<12; j++)
+					for (j=0; j<13; j++)
 					{
-						cr += (tmp >> (j+18)) & 1;
+						cr += (tmp >> (j+19)) & 1;
 						cb += (tmp >> j) & 1;
 					}
 					for (j=0; j<13; j++)
@@ -2507,7 +2507,7 @@ void GameView::OnDraw()
 					cg *= tmp;
 					cb *= tmp;
 					for (j=0; j<h; j++)
-						g->BlendPixel({ x+29-i, y+j }, RGBA(cr>255?255:cr, cg>255?255:cg, cb>255?255:cb, alpha));
+						g->BlendPixel({ x+31-i, y+j }, RGBA(cr>255?255:cr, cg>255?255:cg, cb>255?255:cb, alpha));
 				}
 			}
 		}

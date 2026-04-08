@@ -67,6 +67,7 @@ static int update(UPDATE_FUNC_ARGS)
 					int destroy = (parts[ID(r)].ctype==PT_PSCN) ? 1 : 0;
 					int nostop = (parts[ID(r)].ctype==PT_INST) ? 1 : 0;
 					int colored = 0, rt;
+					bool colorblack = false;
 					for (int docontinue = 1, nxx = 0, nyy = 0, nxi = rx*-1, nyi = ry*-1; docontinue; nyy+=nyi, nxx+=nxi)
 					{
 						if (!(x+nxi+nxx<XRES && y+nyi+nyy<YRES && x+nxi+nxx >= 0 && y+nyi+nyy >= 0))
@@ -89,6 +90,7 @@ static int update(UPDATE_FUNC_ARGS)
 								else
 								{
 									parts[nr].ctype = colored;
+									parts[nr].tmp2 = colorblack ? 1 : 0;
 									parts[nr].life = short_bray_life;
 								}
 								parts[nr].temp = parts[i].temp;
@@ -132,8 +134,7 @@ static int update(UPDATE_FUNC_ARGS)
 								if (parts[r].tmp != 6)
 								{
 									colored = Element_FILT_interactWavelengths(sim, &parts[r], colored);
-									if (!colored)
-										break;
+									colorblack = !colored;
 								}
 								isBlackDeco = (parts[r].dcolour==0xFF000000);
 								parts[r].life = 4;

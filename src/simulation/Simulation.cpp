@@ -866,12 +866,12 @@ int Simulation::get_wavelength_bin(int *wm)
 {
 	int i, w0, wM, r;
 
-	if (!(*wm & 0x3FFFFFFF))
-		return -1;
+	if (!(*wm & 0xFFFFFFFF))
+		return 0;
 
 #if defined(__GNUC__) || defined(_MSVC_VER)
-	w0 = __builtin_ctz(*wm | 0xC0000000);
-	wM = 31 - __builtin_clz(*wm & 0x3FFFFFFF);
+	w0 = __builtin_ctz(*wm | 0x0);
+	wM = 31 - __builtin_clz(*wm & 0xFFFFFFFF);
 #else
 	w0 = 30;
 	wM = 0;
@@ -1336,7 +1336,7 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 			if (TYP(r) == PT_GLOW)
 			{
 				part_change_type(i, x, y, PT_PHOT);
-				parts[i].ctype = 0x3FFFFFFF;
+				parts[i].ctype = 0xFFFFFFFF;
 			}
 			break;
 		case PT_PROT:
@@ -2922,7 +2922,7 @@ void Simulation::MovementPhase(int i, Neighbourhood neighbourhood)
 					auto nrx = gn.nx;
 					auto nry = gn.ny;
 					auto r = get_wavelength_bin(&parts[i].ctype);
-					if (r == -1 || !(parts[i].ctype&0x3FFFFFFF))
+					if (r == -1 || !(parts[i].ctype&0xFFFFFFFF))
 					{
 						kill_part(i);
 						return;
@@ -3034,7 +3034,7 @@ void Simulation::MovementPhase(int i, Neighbourhood neighbourhood)
 					kill_part(i);
 				return;
 			}
-			if (!(parts[i].ctype&0x3FFFFFFF) && t == PT_PHOT)
+			if (!(parts[i].ctype&0xFFFFFFFF) && t == PT_PHOT)
 			{
 				kill_part(i);
 				return;

@@ -48,7 +48,7 @@ void Element::Element_PHOT()
 	HighTemperatureTransition = NT;
 
 	DefaultProperties.life = 680;
-	DefaultProperties.ctype = 0x3FFFFFFF;
+	DefaultProperties.ctype = 0xFFFFFFFF;
 
 	Update = &update;
 	Graphics = &graphics;
@@ -60,10 +60,6 @@ static int update(UPDATE_FUNC_ARGS)
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
 
-	if (!(parts[i].ctype&0x3FFFFFFF)) {
-		sim->kill_part(i);
-		return 1;
-	}
 	if (parts[i].temp > 506)
 		if (sim->rng.chance(1, 10))
 			Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
@@ -148,16 +144,19 @@ static int graphics(GRAPHICS_FUNC_ARGS)
 {
 	int x = 0;
 	*colr = *colg = *colb = 0;
-	for (x=0; x<12; x++) {
-		*colr += (cpart->ctype >> (x+18)) & 1;
+	for (x=0; x<13; x++) {
+		*colr += (cpart->ctype >> (x+19)) & 1;
 		*colb += (cpart->ctype >>  x)     & 1;
 	}
-	for (x=0; x<12; x++)
+	for (x=0; x<13; x++)
 		*colg += (cpart->ctype >> (x+9))  & 1;
 	x = 624/(*colr+*colg+*colb+1);
 	*colr *= x;
 	*colg *= x;
 	*colb *= x;
+	if (!(*colr | *colg | *colb)) {
+		*colr = *colg = *colb = 80;
+	}
 
 	*firea = 100;
 	*firer = *colr;
