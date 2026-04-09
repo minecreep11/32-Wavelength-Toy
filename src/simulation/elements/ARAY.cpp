@@ -168,6 +168,10 @@ static int update(UPDATE_FUNC_ARGS)
 								}
 							// this if prevents BRAY from stopping on certain materials
 							}
+							else if (rt == PT_INVIS && colored != 0)
+							{
+								docontinue = 1;
+							}
 							else if (rt != PT_INWR && (rt != PT_SPRK || parts[r].ctype != PT_INWR) && rt != PT_ARAY && rt != PT_WIFI && !(rt == PT_SWCH && parts[r].life >= 10))
 							{
 								if (nyy!=0 || nxx!=0)
