@@ -9,6 +9,7 @@
 #include "gui/game/GameController.h"
 #include "gui/game/GameModel.h"
 #include "gui/interface/Engine.h"
+#include "common/tpt-compat.h"
 #include "common/Assert.h"
 #include <cmath>
 #include <cstddef>

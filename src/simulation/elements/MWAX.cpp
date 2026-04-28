@@ -37,7 +37,7 @@ void Element::Element_MWAX()
 	HighPressure = IPH;
 	HighPressureTransition = NT;
 	LowTemperature = 318.0f;
-	LowTemperatureTransition = PT_WAX; //@ MWAX -> WAX
+	LowTemperatureTransition = PT_WAX;
 	HighTemperature = 673.0f;
-	HighTemperatureTransition = PT_FIRE; //@ MWAX -> FIRE
+	HighTemperatureTransition = PT_FIRE;
 }

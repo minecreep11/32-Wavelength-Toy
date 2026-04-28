@@ -33,7 +33,6 @@ void Element::Element_FWRK()
 	Description = "Original version of fireworks, activated by heat/neutrons.";
 
 	Properties = TYPE_PART|PROP_LIFE_DEC;
-	CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -93,7 +92,6 @@ static int update(UPDATE_FUNC_ARGS)
 		unsigned col = (r<<16) | (g<<8) | b;
 		for (n=0; n<40; n++)
 		{
-			//@ FWRK -> EMBR
 			int np = sim->create_part(-3, x, y, PT_EMBR);
 			if (np>-1)
 			{

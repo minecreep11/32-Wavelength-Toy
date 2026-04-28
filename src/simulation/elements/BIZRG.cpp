@@ -40,7 +40,7 @@ void Element::Element_BIZRG()
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 100.0f;
-	HighTemperatureTransition = PT_BIZR; //@ BIZRG -> BIZR
+	HighTemperatureTransition = PT_BIZR;
 
 	DefaultProperties.ctype = 0x47FFFF;
 

@@ -32,7 +32,6 @@ void Element::Element_BRMT()
 	Description = "Broken metal. Created when iron rusts or when metals break from pressure.";
 
 	Properties = TYPE_PART|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
-	CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -41,7 +40,7 @@ void Element::Element_BRMT()
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 1273.0f;
-	HighTemperatureTransition = ST; //@ BRMT -> LAVA(BMTL)
+	HighTemperatureTransition = ST;
 
 	Update = &update;
 }
@@ -66,10 +65,9 @@ static int update(UPDATE_FUNC_ARGS)
 					{
 						if (sim->rng.chance(1, 2))
 						{
-							//@ BRMT + BREC -> BRMT + THRM
 							sim->create_part(ID(r), x+rx, y+ry, PT_THRM);
 						}
-						else //@ BRMT + BREC -> THRM + BREC
+						else
 							sim->create_part(i, x, y, PT_THRM);
 					}
 				}

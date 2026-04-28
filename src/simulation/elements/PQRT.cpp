@@ -41,7 +41,7 @@ void Element::Element_PQRT()
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 2573.15f;
-	HighTemperatureTransition = PT_LAVA; //@ PQRT -> LAVA(QRTZ)
+	HighTemperatureTransition = PT_LAVA;
 
 	Update = &Element_QRTZ_update;
 	Graphics = &Element_QRTZ_graphics;

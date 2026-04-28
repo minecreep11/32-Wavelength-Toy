@@ -41,7 +41,7 @@ void Element::Element_GLAS()
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 1973.0f;
-	HighTemperatureTransition = PT_LAVA; //@ GLAS -> LAVA(GLAS)
+	HighTemperatureTransition = PT_LAVA;
 
 	Update = &update;
 	Create = &create;
@@ -58,7 +58,6 @@ static int update(UPDATE_FUNC_ARGS)
 		strength = 16;
 	if (diff > strength || diff < -1 * strength)
 	{
-		//@ GLAS -> BGLA
 		sim->part_change_type(i, x, y, PT_BGLA);
 	}
 	parts[i].tmp3 = press;
@@ -76,7 +75,6 @@ static int update(UPDATE_FUNC_ARGS)
 		// If found an empty spot around glass
 		if (!r)
 		{
-			//@ GLAS -> GLAS + LNTG
 			auto np = sim->create_part(-1, x+rx, y+ry, PT_LNTG);
 			if (np>-1)
 			{

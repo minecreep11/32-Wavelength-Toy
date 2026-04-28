@@ -33,7 +33,7 @@ void Element::Element_PSTS()
 	Properties = TYPE_SOLID;
 
 	LowPressure = 0.5f;
-	LowPressureTransition = PT_PSTE; //@ PSTS -> PSTE
+	LowPressureTransition = PT_PSTE;
 	HighPressure = IPH;
 	HighPressureTransition = NT;
 	LowTemperature = ITL;

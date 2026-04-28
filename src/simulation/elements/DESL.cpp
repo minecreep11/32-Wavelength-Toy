@@ -34,9 +34,9 @@ void Element::Element_DESL()
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = 5.0f;
-	HighPressureTransition = PT_FIRE; //@ DESL -> FIRE
+	HighPressureTransition = PT_FIRE;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 335.0f;
-	HighTemperatureTransition = PT_FIRE; //@ DESL -> FIRE
+	HighTemperatureTransition = PT_FIRE;
 }
