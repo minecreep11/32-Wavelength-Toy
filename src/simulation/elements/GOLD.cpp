@@ -43,7 +43,7 @@ void Element::Element_GOLD()
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 1337.0f;
-	HighTemperatureTransition = PT_LAVA; //@ GOLD -> LAVA(GOLD)
+	HighTemperatureTransition = PT_LAVA;
 
 	Update = &update;
 	Graphics = &graphics;
@@ -65,7 +65,6 @@ static int update(UPDATE_FUNC_ARGS)
 			if(!r) continue;
 			if(TYP(r)==PT_BMTL && parts[ID(r)].tmp)
 			{
-				//@ GOLD + BMTL -> GOLD + IRON
 				parts[ID(r)].tmp = 0;
 				sim->part_change_type(ID(r), x+rx, y+ry, PT_IRON);
 			}

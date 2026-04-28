@@ -22,9 +22,7 @@ constexpr auto DEBUG_SURFNORM   = 0x0010;
 constexpr auto DEBUG_SIMHUD     = 0x0020;
 constexpr auto DEBUG_RENHUD     = 0x0040;
 constexpr auto DEBUG_AIRVEL     = 0x0080;
-constexpr auto DEBUG_FRAMETIME  = 0x0100;
 
-class FrameTime;
 class DebugInfo;
 class SaveFile;
 class Notification;
@@ -217,6 +215,4 @@ public:
 
 	void SetToolIndex(ByteString identifier, std::optional<int> index);
 	void InitCommandInterface();
-
-	FrameTime *GetFrameTime() const;
 };

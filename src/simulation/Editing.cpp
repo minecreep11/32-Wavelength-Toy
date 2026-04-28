@@ -4,6 +4,7 @@
 #include "Air.h"
 #include "gravity/Gravity.h"
 #include "common/tpt-rand.h"
+#include "common/tpt-compat.h"
 #include "client/GameSave.h"
 #include "ElementClasses.h"
 #include "graphics/Renderer.h"

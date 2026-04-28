@@ -4,15 +4,17 @@
 #include "simulation/Simulation.h"
 #include "simulation/ElementClasses.h"
 #include "simulation/elements/PIPE.h"
+#include "common/tpt-compat.h"
 #include "common/Bson.h"
 #include "graphics/Renderer.h"
 #include "Config.h"
-#include <algorithm>
-#include <climits>
-#include <cmath>
 #include <iostream>
+#include <cmath>
+#include <climits>
 #include <memory>
 #include <set>
+#include <cmath>
+#include <algorithm>
 #include <stack>
 
 constexpr auto currentVersion = UPSTREAM_VERSION.displayVersion;
@@ -76,15 +78,6 @@ void GameSave::MapPalette()
 		ignoreMissingErrors[PT_SNOW] = true;
 		ignoreMissingErrors[PT_RSST] = true;
 		ignoreMissingErrors[PT_RSSS] = true;
-	}
-	if (version <= Version(99, 5))
-	{
-		ignoreMissingErrors[PT_PLSM] = true;
-		ignoreMissingErrors[PT_EXOT] = true;
-		ignoreMissingErrors[PT_FWRK] = true;
-		ignoreMissingErrors[PT_WTRV] = true;
-		ignoreMissingErrors[PT_FIRE] = true;
-		ignoreMissingErrors[PT_BRMT] = true;
 	}
 
 	auto &sd = SimulationData::CRef();

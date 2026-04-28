@@ -38,7 +38,7 @@ void Element::Element_SLTW()
 	HighPressure = IPH;
 	HighPressureTransition = NT;
 	LowTemperature = 252.05f;
-	LowTemperatureTransition = PT_ICEI; //@ SLTW -> ICE(SLTW)
+	LowTemperatureTransition = PT_ICEI;
 	HighTemperature = 383.0f;
 	HighTemperatureTransition = ST;
 
@@ -57,7 +57,6 @@ static int update(UPDATE_FUNC_ARGS)
 				switch (TYP(r))
 				{
 				case PT_SALT:
-					//@ SLTW + SALT -> 2xSLTW
 					if (sim->rng.chance(1, 2000))
 						sim->part_change_type(ID(r),x+rx,y+ry,PT_SLTW);
 					break;
@@ -67,7 +66,6 @@ static int update(UPDATE_FUNC_ARGS)
 					break;
 				case PT_RBDM:
 				case PT_LRBD:
-					//@ SLTW + RBDM/LRBD -> FIRE + RBDM/LRBD
 					if ((sim->legacy_enable||parts[i].temp>(273.15f+12.0f)) && sim->rng.chance(1, 100))
 					{
 						sim->part_change_type(i,x,y,PT_FIRE);

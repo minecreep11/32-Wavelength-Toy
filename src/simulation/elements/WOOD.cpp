@@ -42,7 +42,7 @@ void Element::Element_WOOD()
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 873.0f;
-	HighTemperatureTransition = PT_FIRE; //@ WOOD -> FIRE
+	HighTemperatureTransition = PT_FIRE;
 
 	Update = &update;
 	Graphics = &graphics;
@@ -56,7 +56,6 @@ static int update(UPDATE_FUNC_ARGS)
 	if (parts[i].temp > 773.0f && sim->pv[y/CELL][x/CELL] <= -10.0f)
 	{
 		float temp = parts[i].temp;
-		//@ WOOD -> BCOL
 		sim->create_part(i, x, y, PT_BCOL);
 		parts[i].temp = temp;
 	}

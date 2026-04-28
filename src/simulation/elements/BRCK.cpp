@@ -36,11 +36,11 @@ void Element::Element_BRCK()
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = 8.8f;
-	HighPressureTransition = PT_STNE; //@ BRCK -> STNE
+	HighPressureTransition = PT_STNE;
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 1223.0f;
-	HighTemperatureTransition = PT_LAVA; //@ BRCK -> LAVA(BRCK)
+	HighTemperatureTransition = PT_LAVA;
 
 	Graphics = &graphics;
 }

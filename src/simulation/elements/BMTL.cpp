@@ -40,7 +40,7 @@ void Element::Element_BMTL()
 	LowTemperature = ITL;
 	LowTemperatureTransition = NT;
 	HighTemperature = 1273.0f;
-	HighTemperatureTransition = PT_LAVA; //@ BMTL -> LAVA(BMTL)
+	HighTemperatureTransition = PT_LAVA;
 
 	Update = &update;
 }
@@ -61,7 +61,6 @@ static int update(UPDATE_FUNC_ARGS)
 						continue;
 					if ((TYP(r)==PT_METL || TYP(r)==PT_IRON) && sim->rng.chance(1, 100))
 					{
-						//@ BMTL + METL/IRON -> 2xBMTL
 						sim->part_change_type(ID(r),x+rx,y+ry,PT_BMTL);
 						parts[ID(r)].tmp = (parts[i].tmp<=7) ? parts[i].tmp=1 : parts[i].tmp - sim->rng.between(0, 4);
 					}
@@ -71,7 +70,6 @@ static int update(UPDATE_FUNC_ARGS)
 	}
 	else if (parts[i].tmp==1 && sim->rng.chance(1, 1000))
 	{
-		//@ BMTL -> BRMT
 		parts[i].tmp = 0;
 		sim->part_change_type(i,x,y,PT_BRMT);
 	}
