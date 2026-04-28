@@ -6,9 +6,9 @@
 #include "ToolClasses.h"
 #include "SimulationData.h"
 #include "client/GameSave.h"
-#include "common/tpt-compat.h"
 #include "common/tpt-rand.h"
 #include "common/Defer.h"
+#include "FrameTime.h"
 #include "gui/game/Brush.h"
 #include "elements/EMP.h"
 #include "elements/LOLZ.h"
@@ -18,6 +18,7 @@
 #include "elements/PRTI.h"
 #include "elements/PLNT.h"
 #include <iostream>
+#include <numbers>
 #include <set>
 #include <stack>
 
@@ -1191,6 +1192,7 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 		int rt = TYP(r);
 		if (rt == PT_WOOD)
 		{
+			//@ WOOD -> SAWD
 			float vel = std::sqrt(std::pow(parts[i].vx, 2) + std::pow(parts[i].vy, 2));
 			if (vel > 5)
 				part_change_type(ID(r), nx, ny, PT_SAWD);
@@ -1295,6 +1297,7 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 
 				if (pv[ny/CELL][nx/CELL] >= -pressureResistance && pv[ny/CELL][nx/CELL] <= pressureResistance)
 				{
+					//@ PHOT + INVIS -> NEUT + INVIS
 					part_change_type(i,x,y,PT_NEUT);
 					parts[i].ctype = 0;
 				}
@@ -1303,12 +1306,14 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 			case PT_BIZR:
 			case PT_BIZRG:
 			case PT_BIZRS:
+				//@ PHOT + BIZR/BIZRG/BIZRS -> ELEC + BIZR/BIZRG/BIZRS
 				part_change_type(i, x, y, PT_ELEC);
 				parts[i].ctype = 0;
 				break;
 			case PT_H2:
 				if (!(parts[i].tmp&0x1))
 				{
+					//@ PHOT + H2 -> PROT + ELEC
 					part_change_type(i, x, y, PT_PROT);
 					parts[i].ctype = 0;
 					parts[i].tmp2 = 0x1;
@@ -1320,6 +1325,7 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 			case PT_GPMP:
 				if (parts[ID(r)].life == 0)
 				{
+					//@ PHOT + GPMP -> GRVT + GPMP
 					part_change_type(i, x, y, PT_GRVT);
 					parts[i].tmp = int(parts[ID(r)].temp - 273.15f);
 				}
@@ -1328,6 +1334,7 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 			break;
 		}
 		case PT_NEUT:
+			//@ NEUT + GLAS/BGLA -> NEUT + GLAS/BGLA + PHOT
 			if (TYP(r) == PT_GLAS || TYP(r) == PT_BGLA)
 				if (rng.chance(1, 10))
 					create_cherenkov_photon(i);
@@ -1335,11 +1342,13 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 		case PT_ELEC:
 			if (TYP(r) == PT_GLOW)
 			{
+				//@ ELEC + GLOW -> PHOT + GLOW
 				part_change_type(i, x, y, PT_PHOT);
 				parts[i].ctype = 0xFFFFFFFF;
 			}
 			break;
 		case PT_PROT:
+			//@ PROT + INVIS -> NEUT + INVIS
 			if (TYP(r) == PT_INVIS)
 				part_change_type(i, x, y, PT_NEUT);
 			break;
@@ -1956,6 +1965,25 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	return i;
 }
 
+// Change part type but preserve temperature and velocity.
+// May fail if i isn't an existing particle id.
+int Simulation::createPartTempVel(int i, int x, int y, int t)
+{
+	auto temp = parts[i].temp;
+	auto vx = parts[i].vx;
+	auto vy = parts[i].vy;
+
+	auto np = create_part(i, x, y, t);
+	if (np >= 0)
+	{
+		parts[np].temp = temp;
+		parts[np].vx = vx;
+		parts[np].vy = vy;
+	}
+
+	return np;
+}
+
 int Parts::Alloc()
 {
 	if (pfree != -1)
@@ -2527,10 +2555,12 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 				}
 				else if (t == PT_SLTW)
 				{
+					//@ SLTW -> SALT/WTRV
 					t = rng.chance(1, 4) ? PT_SALT : PT_WTRV;
 				}
 				else if (t == PT_BRMT)
 				{
+					//@ BRMT(TUNG) -> LAVA(TUNG)
 					if (parts[i].ctype == PT_TUNG)
 					{
 						if (ctemph < elements[parts[i].ctype].HighTemperature)
@@ -2558,12 +2588,14 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 				{
 					if (parts[i].tmp > 5)
 					{
+						//@ RIME -> ACID
 						t = PT_ACID;
 						parts[i].life = 25 + 5 * parts[i].tmp;
 						parts[i].tmp = 0;
 					}
 					else
 					{
+						//@ RIME -> WATR
 						t = PT_WATR;
 					}
 				}
@@ -2579,6 +2611,7 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 				}
 				else if (t == PT_WTRV)
 				{
+					//@ WTRV -> RIME/DSTW
 					t = (pt < 273.0f) ? PT_RIME : PT_DSTW;
 				}
 				else if (t == PT_LAVA)
@@ -2615,18 +2648,20 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 							parts[i].ctype = PT_NONE;
 							if (t == PT_THRM)
 							{
+								//@ LAVA(THRM) -> BMTL
 								parts[i].tmp = 0;
 								t = PT_BMTL;
 							}
 							if (t == PT_PLUT)
 							{
+								//@ LAVA(PLUT) -> LAVA
 								parts[i].tmp = 0;
 								t = PT_LAVA;
 							}
 						}
 					}
 					else if (pt<973.0f)
-						t = PT_STNE;
+						t = PT_STNE; //@ LAVA -> STNE
 					else
 						s = 0;
 				}
@@ -2648,6 +2683,14 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 					//idealy transitions should use create_part(i) but some elements rely on properties staying constant
 					//and I don't feel like checking each one right now
 					parts[i].tmp = 0;
+
+					if (parts[i].type == PT_SEED)
+					{
+						parts[i].ctype = 0;
+						parts[i].tmp2 = 0;
+						parts[i].tmp3 = 0;
+						parts[i].tmp4 = 0;
+					}
 				}
 				if ((elements[t].Properties&TYPE_GAS) && !(elements[parts[i].type].Properties&TYPE_GAS))
 					pv[y/CELL][x/CELL] += 0.50f;
@@ -2793,6 +2836,17 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 				return true;
 			}
 			parts[i].life = 0;
+
+			// To prevent PIPE -> BRMT setting BRMT's ctype
+			if (t == PT_BRMT)
+			{
+				parts[i].ctype = 0;
+				parts[i].tmp = 0;
+				parts[i].tmp2 = 0;
+				parts[i].tmp3 = 0;
+				parts[i].tmp4 = 0;
+			}
+
 			// part_change_type could refuse to change the type and kill the particle
 			// for example, changing type to STKM but one already exists
 			// we need to account for that to not cause simulation corruption issues
@@ -3053,11 +3107,11 @@ void Simulation::MovementPhase(int i, Neighbourhood neighbourhood)
 			if (fin_x<x-ISTP) fin_x=x-ISTP;
 			if (fin_y>y+ISTP) fin_y=y+ISTP;
 			if (fin_y<y-ISTP) fin_y=y-ISTP;
-			if (do_move(i, x, y, (float)(2*x-fin_x), fin_y))
+			if (do_move(i, x, y, float(2*x-fin_x), float(fin_y)))
 			{
 				parts[i].vx *= elements[t].Collision;
 			}
-			else if (do_move(i, x, y, fin_x, (float)(2*y-fin_y)))
+			else if (do_move(i, x, y, float(fin_x), float(2*y-fin_y)))
 			{
 				parts[i].vy *= elements[t].Collision;
 			}
@@ -3288,6 +3342,7 @@ void Simulation::MovementPhase(int i, Neighbourhood neighbourhood)
 
 void Simulation::RecalcFreeParticles(bool do_life_dec)
 {
+	FrameTime::Span span(frameTime, "Simulation::RecalcFreeParticles");
 	memset(pmap, 0, sizeof(pmap));
 	memset(pmap_count, 0, sizeof(pmap_count));
 	memset(photons, 0, sizeof(photons));
@@ -3604,6 +3659,7 @@ void Simulation::CheckStacking()
 					{
 						if (pmap_count[y][x]>NPART)
 						{
+							//@ stacking -> NBHL
 							create_part(i, x, y, PT_NBHL);
 							parts[i].temp = MAX_TEMP;
 							parts[i].tmp = pmap_count[y][x]-NPART;//strength of grav field
@@ -3668,7 +3724,10 @@ void Simulation::BeforeSim(bool willUpdate)
 {
 	if (willUpdate)
 	{
-		air->update_air();
+		{
+			FrameTime::Span span(frameTime, "Air::update_air");
+			air->update_air();
+		}
 
 		if(aheat_enable)
 			air->update_airh();
@@ -3693,9 +3752,9 @@ void Simulation::BeforeSim(bool willUpdate)
 		if (elementRecount)
 			std::fill(elementCount, elementCount+PT_NUM, 0);
 	}
-	sandcolour_interface = (int)(20.0f*sin((float)sandcolour_frame*(TPT_PI_FLT/180.0f)));
+	sandcolour_interface = int(20.0f*sin(float(sandcolour_frame)*std::numbers::pi_v<float>/180.0f));
 	sandcolour_frame = (sandcolour_frame+1)%360;
-	sandcolour = (int)(20.0f*sin((float)(frameCount)*(TPT_PI_FLT/180.0f)));
+	sandcolour = int(20.0f*sin(float(frameCount)*std::numbers::pi_v<float>/180.0f));
 
 	if (gravWallChanged)
 	{
