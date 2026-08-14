@@ -12,6 +12,18 @@ sign::sign(String text_, int x_, int y_, Justification justification_):
 {
 }
 
+String ctypeToHex(int value)
+{
+	char hex[17] = "0123456789ABCDEF";
+	char out[11] = "0x00000000";
+	for (int i = 0;i < 8;i++)
+	{
+		char index = (value >> (i * 4)) & 0x0F;
+		out[9-i] = hex[index];
+	}
+	return String::Build(out);
+}
+
 String sign::getDisplayText(const RenderableSimulation *sim, int &x0, int &y0, int &w, int &h, bool colorize, bool *v95) const
 {
 	auto &sd = SimulationData::CRef();
@@ -87,7 +99,17 @@ String sign::getDisplayText(const RenderableSimulation *sim, int &x0, int &y0, i
 					}
 					else if (between_curlies == "ctype")
 					{
-						formatted_text << (part ? (sd.IsElementOrNone(part->ctype) ? sd.ElementResolve(part->ctype, -1) : String::Build(part->ctype)) : (formatted_text.Size() ? String::Build("empty") : String::Build("Empty")));
+						if (part) {
+							if (sd.BasicParticleInfo(*part) == "LITH") {
+								formatted_text << String::Build(part->ctype);
+							} else if (sd.BasicParticleInfo(*part) == "FILT" || sd.BasicParticleInfo(*part) == "PHOT" || sd.BasicParticleInfo(*part) == "BRAY" || sd.BasicParticleInfo(*part) == "BIZR" || sd.BasicParticleInfo(*part) == "BIZG" || sd.BasicParticleInfo(*part) == "BIZS") {
+								formatted_text << ctypeToHex(part->ctype);
+							} else {
+								formatted_text << (part ? (sd.IsElementOrNone(part->ctype) ? sd.ElementResolve(part->ctype, -1) : String::Build(part->ctype)) : (formatted_text.Size() ? String::Build("empty") : String::Build("Empty")));
+							}
+						} else {
+							formatted_text << String::Build("empty");
+						}
 						if (v95)
 							*v95 = true;
 					}
