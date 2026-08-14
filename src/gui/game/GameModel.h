@@ -68,7 +68,7 @@ private:
 	void DeselectTool(ByteString identifier);
 	void InitTools();
 
-	Simulation * sim;
+	std::unique_ptr<Simulation> sim;
 	bool paused = false;
 	int queuedFrames = 0;
 	Renderer * ren;
@@ -267,6 +267,8 @@ public:
 	bool GetNewtonianGrvity();
 	void ShowGravityGrid(bool showGrid);
 	bool GetGravityGrid();
+	void ShowGridCheckerboard(bool enableCheckerboard);
+	bool GetGridCheckerboard();
 	void ClearSimulation();
 	std::vector<Menu*> GetMenuList();
 	std::vector<QuickOption*> GetQuickOptions();

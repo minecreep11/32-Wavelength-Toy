@@ -1,5 +1,4 @@
 #pragma once
-#include "common/Bson.h"
 #include "common/Plane.h"
 #include "common/String.h"
 #include "common/tpt-rand.h"
@@ -13,6 +12,7 @@
 #include "SimulationConfig.h"
 #include <vector>
 #include <array>
+#include <json/json.h>
 
 struct sign;
 struct Particle;
@@ -69,7 +69,9 @@ class GameSave
 
 public:
 	Vec2<int> blockSize = { 0, 0 };
+	Rect<int> blockContent = { { 0, 0 }, { 0, 0 } };
 	bool fromNewerVersion = false;
+	bool fromUnstableVersion = false;
 	Version<2> version{};
 	bool hasPressure = false;
 	bool hasAmbientHeat = false;
@@ -127,7 +129,7 @@ public:
 	std::vector<PaletteItem> palette;
 
 	// author information
-	Bson authors;
+	Json::Value authors;
 
 	int pmapbits = 8; // default to 8 bits for older saves
 

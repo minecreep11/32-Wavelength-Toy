@@ -1659,6 +1659,14 @@ void GameView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl,
 	{
 		c->LoadRenderPreset(11);
 	}
+	else if (shift && key == '0')
+	{
+		c->LoadRenderPreset(12);
+	}
+	else if (shift && key == '7')
+	{
+		c->LoadRenderPreset(13);
+	}
 	else if (key >= '0' && key <= '9')
 	{
 		c->LoadRenderPreset(key-'0');
@@ -2381,7 +2389,7 @@ void GameView::OnDraw()
 				else if (type == PT_FILT)
 				{
 					sampleInfo << c->ElementResolve(type, ctype);
-					String filtModes[] = {"set colour", "AND", "OR", "subtract colour", "red shift", "blue shift", "no effect", "XOR", "NOT", "old QRTZ scattering", "variable red shift", "variable blue shift"};
+					String filtModes[] = {"set colour", "AND", "OR", "AND-NOT", "red shift", "blue shift", "no effect", "XOR", "NOT", "old QRTZ scattering", "variable red shift", "variable blue shift"};
 					if (sample.particle.tmp>=0 && sample.particle.tmp<=11)
 						sampleInfo << " (" << filtModes[sample.particle.tmp] << ")";
 					else
@@ -2527,7 +2535,7 @@ void GameView::OnDraw()
 			if (gravtot)
 				sampleInfo << ", GX: " << sample.GravityVelocityX << " GY: " << sample.GravityVelocityY;
 
-			if (c->GetAHeatEnable())
+			if (c->GetAHeatEnable() && sample.isMouseInSim)
 			{
 				sampleInfo << ", AHeat: ";
 				format::RenderTemperature(sampleInfo, sample.AirTemperature, c->GetTemperatureScale());
@@ -2590,10 +2598,6 @@ void GameView::OnDraw()
 			if (std::holds_alternative<DrawLimitDisplay>(drawLimit))
 			{
 				fpsInfo << "display";
-			}
-			else if (std::holds_alternative<DrawLimitNone>(drawLimit))
-			{
-				fpsInfo << "none";
 			}
 			else
 			{

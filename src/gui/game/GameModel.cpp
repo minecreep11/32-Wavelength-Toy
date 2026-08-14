@@ -63,12 +63,12 @@ GameModel::GameModel(GameView *newView):
 	edgePressure(0),
 	edgeVelocityX(0),
 	edgeVelocityY(0),
-	vorticityCoeff(0.0f),
+	vorticityCoeff(0.1f),
 	convectionMode(AIRC_BOUSSINESQ),
 	decoSpace(DECOSPACE_SRGB),
 	view(newView)
 {
-	sim = new Simulation();
+	sim = Simulation::Factory();
 	sim->useLuaCallbacks = true;
 	ren = new Renderer();
 
@@ -111,6 +111,7 @@ GameModel::GameModel(GameView *newView):
 
 	rendererSettings.gravityFieldEnabled = prefs.Get("Renderer.GravityField", false);
 	rendererSettings.decorationLevel = prefs.Get("Renderer.Decorations", true) ? RendererSettings::decorationEnabled : RendererSettings::decorationDisabled;
+	rendererSettings.gridCheckerboard = prefs.Get("Renderer.GridCheckerboard", false);
 	threadedRendering = prefs.Get("Renderer.SeparateThread", true);
 
 	//Load config into simulation
@@ -224,6 +225,7 @@ GameModel::~GameModel()
 		prefs.Set("Renderer.DisplayMode", rendererSettings.displayMode);
 		prefs.Set("Renderer.RenderMode", rendererSettings.renderMode);
 		prefs.Set("Renderer.GravityField", rendererSettings.gravityFieldEnabled);
+		prefs.Set("Renderer.GridCheckerboard", rendererSettings.gridCheckerboard);
 		prefs.Set("Renderer.Decorations", GetDecoration());
 		prefs.Set("Renderer.DebugMode", rendererSettings.debugLines); //These two should always be equivalent, even though they are different things
 		prefs.Set("Simulation.NewtonianGravity", bool(sim->grav));
@@ -235,7 +237,7 @@ GameModel::~GameModel()
 		prefs.Set("Decoration.Alpha", (int)colour.Alpha);
 	}
 
-	delete sim;
+	sim.reset();
 	delete ren;
 	//if(activeTools)
 	//	delete[] activeTools;
@@ -870,7 +872,7 @@ void GameModel::SetSave(std::unique_ptr<SaveInfo> newSave, bool invertIncludePre
 		sim->Load(saveData, !invertIncludePressure, { 0, 0 });
 		// This save was created before logging existed
 		// Add in the correct info
-		if (saveData->authors.GetSize() == 0)
+		if (saveData->authors.size() == 0)
 		{
 			auto gameSave = currentSave.saveInfo->TakeGameSave();
 			gameSave->authors["type"] = "save";
@@ -879,12 +881,12 @@ void GameModel::SetSave(std::unique_ptr<SaveInfo> newSave, bool invertIncludePre
 			gameSave->authors["title"] = currentSave.saveInfo->name.ToUtf8();
 			gameSave->authors["description"] = currentSave.saveInfo->Description.ToUtf8();
 			gameSave->authors["published"] = (int)currentSave.saveInfo->Published;
-			gameSave->authors["date"] = int64_t(currentSave.saveInfo->updatedDate);
+			gameSave->authors["date"] = (Json::Value::UInt64)currentSave.saveInfo->updatedDate;
 			currentSave.saveInfo->SetGameSave(std::move(gameSave));
 		}
 		// This save was probably just created, and we didn't know the ID when creating it
 		// Update with the proper ID
-		else if (saveData->authors.Get("id", -1) == 0 || saveData->authors.Get("id", -1) == -1)
+		else if (saveData->authors.get("id", -1) == 0 || saveData->authors.get("id", -1) == -1)
 		{
 			auto gameSave = currentSave.saveInfo->TakeGameSave();
 			gameSave->authors["id"] = currentSave.saveInfo->id;
@@ -929,7 +931,7 @@ void GameModel::SetSaveFile(std::unique_ptr<SaveFile> newSave, bool invertInclud
 
 Simulation * GameModel::GetSimulation()
 {
-	return sim;
+	return sim.get();
 }
 
 Renderer * GameModel::GetRenderer()
@@ -1196,6 +1198,16 @@ void GameModel::ShowGravityGrid(bool showGrid)
 bool GameModel::GetGravityGrid()
 {
 	return rendererSettings.gravityFieldEnabled;
+}
+
+void GameModel::ShowGridCheckerboard(bool enableCheckerboard)
+{
+	rendererSettings.gridCheckerboard = enableCheckerboard;
+}
+
+bool GameModel::GetGridCheckerboard()
+{
+	return rendererSettings.gridCheckerboard;
 }
 
 void GameModel::FrameStep(int frames)

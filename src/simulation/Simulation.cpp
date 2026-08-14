@@ -20,7 +20,26 @@
 #include <iostream>
 #include <numbers>
 #include <set>
-#include <stack>
+
+namespace
+{
+	struct SimulationImpl : public Simulation
+	{
+		struct Neighbourhood
+		{
+			std::array<int, 8> surround;
+			int surround_space = 0;
+			int nt = 0; //if nt is greater than 1 after this, then there is a particle around the current particle, that is NOT the current particle's type, for water movement.
+			float pGravX = 0;
+			float pGravY = 0;
+		};
+		void MovementPhase(int i, Neighbourhood neighbourhood);
+		Neighbourhood GetNeighbourhood(int i) const;
+		bool TransitionPhase(int i, const Neighbourhood &neighbourhood);
+
+		void UpdateParticles(int start, int end) final override;
+	};
+}
 
 static float remainder_p(float x, float y)
 {
@@ -270,7 +289,8 @@ void Simulation::Load(const GameSave *save, bool includePressure, Vec2<int> bloc
 		}
 	}
 	auto useGravityMaps = save->hasGravityMaps && grav;
-	for (auto bpos : RectSized(blockP, save->blockSize) & CELLS.OriginRect())
+	auto targetBlocks = RectSized(blockP + save->blockContent.TopLeft(), save->blockContent.size) & CELLS.OriginRect();
+	for (auto bpos : targetBlocks)
 	{
 		auto spos = bpos - blockP;
 		if (save->blockMap[spos])
@@ -314,7 +334,7 @@ void Simulation::Load(const GameSave *save, bool includePressure, Vec2<int> bloc
 	gravWallChanged = true;
 	if (!save->hasBlockAirMaps)
 	{
-		air->ApproximateBlockAirMaps();
+		air->ApproximateBlockAirMaps(targetBlocks);
 	}
 }
 
@@ -702,7 +722,7 @@ bool Simulation::flood_water(int x, int y, int i)
 			}
 			while (x2 < XRES-CELL)
 			{
-				if (elements[TYP(pmap[y][x2 + 1])].Falldown != 2 || bitmap[(y * XRES) + x1 - 1])
+				if (elements[TYP(pmap[y][x2 + 1])].Falldown != 2 || bitmap[(y * XRES) + x2 + 1])
 					break;
 				x2++;
 			}
@@ -1696,22 +1716,6 @@ Simulation::GetNormalResult Simulation::get_normal(int pt, int x, int y, float d
 	return { true, nx, ny, lx, ly, rx, ry };
 }
 
-
-
-template<bool PhotoelectricEffect, class Sim>
-void PhotoelectricEffectHelper(Sim &sim, int x, int y);
-
-template<>
-void PhotoelectricEffectHelper<false, const Simulation>(const Simulation &sim, int x, int y)
-{
-}
-
-template<>
-void PhotoelectricEffectHelper<true, Simulation>(Simulation &sim, int x, int y)
-{
-	sim.photoelectric_effect(x, y);
-}
-
 template<bool PhotoelectricEffect, class Sim>
 Simulation::GetNormalResult Simulation::get_normal_interp(Sim &sim, int pt, float x0, float y0, float dx, float dy)
 {
@@ -1735,8 +1739,11 @@ Simulation::GetNormalResult Simulation::get_normal_interp(Sim &sim, int pt, floa
 	if (i >= NORMAL_INTERP)
 		return { false };
 
-	if (pt == PT_PHOT)
-		PhotoelectricEffectHelper<PhotoelectricEffect, Sim>(sim, x, y);
+	if constexpr (PhotoelectricEffect)
+	{
+		if (pt == PT_PHOT)
+			sim.photoelectric_effect(x, y);
+	}
 
 	return sim.get_normal(pt, x, y, dx, dy);
 }
@@ -1913,10 +1920,14 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	{
 		int oldX = (int)(parts[p].x + 0.5f);
 		int oldY = (int)(parts[p].y + 0.5f);
-		if (pmap[oldY][oldX] && ID(pmap[oldY][oldX]) == p)
-			pmap[oldY][oldX] = 0;
-		if (photons[oldY][oldX] && ID(photons[oldY][oldX]) == p)
-			photons[oldY][oldX] = 0;
+
+		if (InBounds(oldX, oldY))
+		{
+			if (pmap[oldY][oldX] && ID(pmap[oldY][oldX]) == p)
+				pmap[oldY][oldX] = 0;
+			if (photons[oldY][oldX] && ID(photons[oldY][oldX]) == p)
+				photons[oldY][oldX] = 0;
+		}
 
 		oldType = parts[p].type;
 
@@ -2246,7 +2257,12 @@ Simulation::PlanMoveResult Simulation::PlanMove(Sim &sim, int i, int x, int y)
 template
 Simulation::PlanMoveResult Simulation::PlanMove<false, const Simulation>(const Simulation &sim, int i, int x, int y);
 
-Simulation::Neighbourhood Simulation::GetNeighbourhood(int i) const
+std::unique_ptr<Simulation> Simulation::Factory()
+{
+	return std::make_unique<SimulationImpl>();
+}
+
+SimulationImpl::Neighbourhood SimulationImpl::GetNeighbourhood(int i) const
 {
 	auto t = parts[i].type;
 	auto x = int(parts[i].x + 0.5f);
@@ -2276,7 +2292,7 @@ Simulation::Neighbourhood Simulation::GetNeighbourhood(int i) const
 	return n;
 }
 
-void Simulation::UpdateParticles(int start, int end)
+void SimulationImpl::UpdateParticles(int start, int end)
 {
 	//the main particle loop function, goes over all particles.
 	auto &sd = SimulationData::CRef();
@@ -2333,28 +2349,11 @@ void Simulation::UpdateParticles(int start, int end)
 			if (t==PT_GAS||t==PT_NBLE)
 			{
 				if (pv[y/CELL][x/CELL]<3.5f)
-					pv[y/CELL][x/CELL] += elements[t].HotAir*(3.5f-pv[y/CELL][x/CELL]);
-				if (y+CELL<YRES && pv[y/CELL+1][x/CELL]<3.5f)
-					pv[y/CELL+1][x/CELL] += elements[t].HotAir*(3.5f-pv[y/CELL+1][x/CELL]);
-				if (x+CELL<XRES)
-				{
-					if (pv[y/CELL][x/CELL+1]<3.5f)
-						pv[y/CELL][x/CELL+1] += elements[t].HotAir*(3.5f-pv[y/CELL][x/CELL+1]);
-					if (y+CELL<YRES && pv[y/CELL+1][x/CELL+1]<3.5f)
-						pv[y/CELL+1][x/CELL+1] += elements[t].HotAir*(3.5f-pv[y/CELL+1][x/CELL+1]);
-				}
+					pv[y/CELL][x/CELL] += 4.0f*elements[t].HotAir*(3.5f-pv[y/CELL][x/CELL]);
 			}
 			else//add the hotair variable to the pressure map, like black hole, or white hole.
 			{
-				pv[y/CELL][x/CELL] += elements[t].HotAir;
-				if (y+CELL<YRES)
-					pv[y/CELL+1][x/CELL] += elements[t].HotAir;
-				if (x+CELL<XRES)
-				{
-					pv[y/CELL][x/CELL+1] += elements[t].HotAir;
-					if (y+CELL<YRES)
-						pv[y/CELL+1][x/CELL+1] += elements[t].HotAir;
-				}
+				pv[y/CELL][x/CELL] += 4.0f*elements[t].HotAir;
 			}
 		}
 
@@ -2412,7 +2411,7 @@ void Simulation::UpdateParticles(int start, int end)
 	}
 }
 
-bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
+bool SimulationImpl::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 {
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
@@ -2529,6 +2528,8 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 				// particle type change due to high temperature
 				if (elements[t].HighTemperatureTransition != ST)
 				{
+					if (t == PT_FOG)
+						parts[i].ctype = 0; // clear unnecessary ctype
 					t = elements[t].HighTemperatureTransition;
 				}
 				else if (t == PT_ICEI || t == PT_SNOW)
@@ -2596,7 +2597,8 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 					else
 					{
 						//@ RIME -> WATR
-						t = PT_WATR;
+						t = parts[i].ctype == PT_DSTW ? PT_DSTW : PT_WATR;
+						parts[i].ctype = 0;
 					}
 				}
 				else
@@ -2675,6 +2677,8 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 			{
 				if (t==PT_ICEI || t==PT_LAVA || t==PT_SNOW)
 					parts[i].ctype = parts[i].type;
+				if (t == PT_RIME)
+					parts[i].ctype = PT_DSTW;
 				if (!(t==PT_ICEI && parts[i].ctype==PT_FRZW) && t!=PT_ACID)
 					parts[i].life = 0;
 				if (t == PT_FIRE)
@@ -2860,7 +2864,7 @@ bool Simulation::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 	return transitionOccurred;
 }
 
-void Simulation::MovementPhase(int i, Neighbourhood neighbourhood)
+void SimulationImpl::MovementPhase(int i, Neighbourhood neighbourhood)
 {
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
