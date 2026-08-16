@@ -138,6 +138,10 @@ static int update(UPDATE_FUNC_ARGS)
 								}
 								isBlackDeco = (parts[r].dcolour==0xFF000000);
 								parts[r].life = 4;
+								if (parts[r].tmp2 > 2 && colorblack)
+								{
+									docontinue = 0;
+								}
 							}
 							else if (rt == PT_STOR)
 							{

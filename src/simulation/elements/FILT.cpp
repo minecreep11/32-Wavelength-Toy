@@ -85,7 +85,6 @@ static void create(ELEMENT_CREATE_FUNC_ARGS)
 // cpart is the FILT particle, origWl the original wavelengths in the interacting particle
 int Element_FILT_interactWavelengths(Simulation *sim, Particle* cpart, int origWl)
 {
-	const int mask = 0xFFFFFFFF;
 	int filtWl = Element_FILT_getWavelengths(cpart);
 	switch (cpart->tmp)
 	{
@@ -101,20 +100,20 @@ int Element_FILT_interactWavelengths(Simulation *sim, Particle* cpart, int origW
 		{
 			int shift = int((cpart->temp-273.0f)*0.027f);
 			if (shift<=0) shift = 1;
-			return (origWl << shift) & mask; // red shift
+			return (origWl << shift); // red shift
 		}
 		case 5:
 		{
 			int shift = int((cpart->temp-273.0f)*0.027f);
 			if (shift<=0) shift = 1;
-			return (origWl >> shift) & mask; // blue shift
+			return (origWl >> shift); // blue shift
 		}
 		case 6:
 			return origWl; // No change
 		case 7:
 			return origWl ^ filtWl; // XOR colours
 		case 8:
-			return (~origWl) & mask; // Invert colours
+			return (~origWl); // Invert colours
 		case 9:
 		{
 			int t1 = (origWl & 0x0000FF) + sim->rng.between(-2, 2);
@@ -125,12 +124,12 @@ int Element_FILT_interactWavelengths(Simulation *sim, Particle* cpart, int origW
 		case 10:
 		{
 			long long int lsb = filtWl & (-filtWl);
-			return (origWl * lsb) & 0xFFFFFFFF; //red shift
+			return (origWl * lsb); //red shift
 		}
 		case 11:
 		{
 			long long int lsb = filtWl & (-filtWl);
-			return (origWl / lsb) & 0xFFFFFFFF; // blue shift
+			return (origWl / lsb); // blue shift
 		}
 		default:
 			return filtWl;
@@ -139,7 +138,7 @@ int Element_FILT_interactWavelengths(Simulation *sim, Particle* cpart, int origW
 
 int Element_FILT_getWavelengths(const Particle* cpart)
 {
-	if (((cpart->ctype&0xFFFFFFFF) || (cpart->tmp2 == 1)) && (cpart->tmp2 != 2))
+	if (((cpart->ctype) || (cpart->tmp2 == 1 || cpart->tmp2 == 4)) && (cpart->tmp2 != 2 && cpart->tmp2 != 5))
 	{
 		return cpart->ctype;
 	}

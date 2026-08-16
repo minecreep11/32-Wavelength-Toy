@@ -103,6 +103,11 @@ static int update(UPDATE_FUNC_ARGS)
 					setFilt = true;
 					photonWl = int(parts[ID(r)].temp);
 				}
+				if (parts[i].tmp == 3 && TYP(r) != PT_TSNS && TYP(r) != PT_FILT)
+				{
+					setFilt = true;
+					photonWl = int(parts[ID(r)].temp * 256.0f);
+				}
 			}
 	if (setFilt)
 	{
@@ -119,7 +124,7 @@ static int update(UPDATE_FUNC_ARGS)
 					auto ny = y + ry;
 					while (TYP(r) == PT_FILT)
 					{
-						parts[ID(r)].ctype = 0x10000000 + photonWl;
+						parts[ID(r)].ctype = photonWl;
 						nx += rx;
 						ny += ry;
 						if (nx < 0 || ny < 0 || nx >= XRES || ny >= YRES)

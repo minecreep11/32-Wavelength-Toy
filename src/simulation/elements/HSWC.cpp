@@ -56,7 +56,7 @@ static int update(UPDATE_FUNC_ARGS)
 	}
 	else
 	{
-		bool deserializeTemp = parts[i].tmp == 1;
+		bool deserializeTemp = parts[i].tmp == 1 || parts[i].tmp == 2;
 		for (auto rx = -2; rx <= 2; rx++)
 		{
 			for (auto ry = -2; ry <= 2; ry++)
@@ -79,9 +79,16 @@ static int update(UPDATE_FUNC_ARGS)
 					{
 						if (rx >= -1 && rx <= 1 && ry >= -1 && ry <= 1)
 						{
-							int newTemp = parts[ID(r)].ctype - 0x10000000;
-							if (newTemp >= MIN_TEMP && newTemp <= MAX_TEMP)
-								parts[i].temp = float(parts[ID(r)].ctype - 0x10000000);
+							if (parts[i].tmp == 1)
+							{
+								int newTemp = parts[ID(r)].ctype - 0x10000000;
+								if (newTemp >= MIN_TEMP && newTemp <= MAX_TEMP)
+									parts[i].temp = float(parts[ID(r)].ctype - 0x10000000);
+							} else {
+								int newTemp = parts[ID(r)].ctype / 256.0f;
+								if (newTemp >= MIN_TEMP && newTemp <= MAX_TEMP)
+									parts[i].temp = float(parts[ID](r)].ctype / 256.0f);
+							}
 						}
 					}
 				}

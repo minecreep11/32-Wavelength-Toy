@@ -106,6 +106,36 @@ static int update(UPDATE_FUNC_ARGS)
 				}
 			}
 		}
+	} else if (parts[i].tmp == 3)
+	{
+		bool setFilt = true;
+		float photonWl = sim->pv[y / CELL][x / CELL];
+		if (setFilt)
+		{
+			for (auto rx = -1; rx <= 1; rx++)
+			{
+				for (auto ry = -1; ry <= 1; ry++)
+				{
+					if (rx || ry)
+					{
+						auto r = pmap[y + ry][x + rx];
+						if (!r)
+							continue;
+						auto nx = x + rx;
+						auto ny = y + ry;
+						while (TYP(r) == PT_FILT)
+						{
+							parts[ID(r)].ctype = int(round(photonWl*256.0f) - MIN_PRESSURE * 256.0f);
+							nx += rx;
+							ny += ry;
+							if (nx < 0 || ny < 0 || nx >= XRES || ny >= YRES)
+								break;
+							r = pmap[ny][nx];
+						}
+					}
+				}
+			}
+		}
 	}
 	return 0;
 }

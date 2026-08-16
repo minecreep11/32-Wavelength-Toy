@@ -68,7 +68,7 @@ static int update(UPDATE_FUNC_ARGS)
 		{
 			for (auto ry = -1; ry <= 1; ry++)
 			{
-				if (parts[i].tmp != 1)
+				if (parts[i].tmp != 1 && parts[i].tmp != 2)
 				{
 					if (!(rx && ry))
 						sim->pv[(y/CELL)+ry][(x/CELL)+rx] += 0.1f*((parts[i].temp-273.15)-sim->pv[(y/CELL)+ry][(x/CELL)+rx]);
@@ -78,10 +78,19 @@ static int update(UPDATE_FUNC_ARGS)
 					int r = pmap[y+ry][x+rx];
 					if (TYP(r) == PT_FILT)
 					{
+						if (parts[i].tmp == 1)
+						{
 						int newPressure = parts[ID(r)].ctype - 0x10000000;
 						if (newPressure >= 0 && newPressure <= MAX_PRESSURE - MIN_PRESSURE)
 						{
 							sim->pv[(y + ry) / CELL][(x + rx) / CELL] = float(newPressure) + MIN_PRESSURE;
+						}
+						} else {
+						float newPressure = float(parts[ID(r)].ctype) * 256.0f;
+						if (newPressure >= 0 && newPressure <= MAX_PRESSURE - MIN_PRESSURE)
+						{
+							sim->pv[(y + ry) / CELL][(x + rx) / CELL] = newPressure + MIN_PRESSURE;
+						}
 						}
 					}
 				}
