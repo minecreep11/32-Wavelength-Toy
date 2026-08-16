@@ -16,4 +16,4 @@ Some other changes have been made:
   - HSWC: tmp of 2 will deserialize from a more precise value  
   - PSNS: tmp of 3 is more precise  
   - PUMP: tmp of 2 is more precise  
-  - VSNS: tmp of 3 will serialize more precisely, tmp of 4 deserializes more precisely.  
+  - VSNS: tmp of 4 will serialize more precisely, tmp of 5 deserializes more precisely.  

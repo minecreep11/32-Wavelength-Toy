@@ -83,6 +83,7 @@ static int update(UPDATE_FUNC_ARGS)
 	}
 	bool doSerialization = false;
 	bool doDeserialization = false;
+	bool precise = false;
 	float Vs = 0;
 	for (int rx = -rd; rx < rd + 1; rx++)
 		for (int ry = -rd; ry < rd + 1; ry++)
@@ -124,15 +125,16 @@ static int update(UPDATE_FUNC_ARGS)
 					if (!(elements[TYP(r)].Properties & TYPE_SOLID) && Vm <= parts[i].temp - 273.15)
 						parts[i].life = 1;
 					break;
-				case 3:
+				case 4:
 					// serial improved
 					if (TYP(r) != PT_VSNS && TYP(r) != PT_FILT && !(elements[TYP(r)].Properties & TYPE_SOLID))
 					{
 						doSerialization = true;
+						precise = true;
 						Vs = Vm;
 					}
 					break;
-				case 4:
+				case 5:
 					// deserial improved
 					if (TYP(r) == PT_FILT)
 					{
@@ -140,6 +142,7 @@ static int update(UPDATE_FUNC_ARGS)
 						if (vel >= 0 && vel < MAX_VELOCITY)
 						{
 							doDeserialization = true;
+							precise = true;
 							Vs = vel;
 						}
 					}
@@ -170,7 +173,12 @@ static int update(UPDATE_FUNC_ARGS)
 				{
 					while (TYP(r) == PT_FILT)
 					{
-						parts[ID(r)].ctype = (int)(Vs * 256.0f + 0.5f);
+						if (precise)
+						{
+							parts[ID(r)].ctype = (int)(Vs * 256.0f + 0.5f);
+						} else {
+							parts[ID(r)].ctype = (int)(Vs) + 0x10000000;
+						}
 						nx += rx;
 						ny += ry;
 						if (nx < 0 || ny < 0 || nx >= XRES || ny >= YRES)
