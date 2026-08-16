@@ -177,7 +177,7 @@ static int update(UPDATE_FUNC_ARGS)
 						{
 							parts[ID(r)].ctype = (int)(Vs * 256.0f + 0.5f);
 						} else {
-							parts[ID(r)].ctype = (int)(Vs) + 0x10000000;
+							parts[ID(r)].ctype = (int)(Vs + 0.5f) + 0x10000000;
 						}
 						nx += rx;
 						ny += ry;
